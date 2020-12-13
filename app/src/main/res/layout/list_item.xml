@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="60dp">
+    android:layout_height="wrap_content">
 
     <TextView
-        android:id="@+id/txtMainItem"
+        android:id="@+id/txtName"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:text="Name Space"
@@ -19,24 +20,47 @@
         tools:ignore="MissingConstraints" />
 
     <TextView
-        android:id="@+id/textView5"
+        android:id="@+id/txtTel"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
         android:paddingLeft="10dp"
-        android:paddingTop="10dp"
         android:paddingRight="10dp"
         android:text="Tel Space"
-        app:layout_constraintLeft_toRightOf="@id/txtMainItem"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/txtName"
+        app:layout_constraintLeft_toRightOf="@id/txtName"
         tools:ignore="MissingConstraints" />
 
     <TextView
-        android:id="@+id/textView6"
-        android:layout_width="match_parent"
-        android:layout_height="20dp"
+        android:id="@+id/txtLastAcpt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
         android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="LastAcpt"
+        app:layout_constraintBottom_toBottomOf="@id/txtName"
+        app:layout_constraintLeft_toRightOf="@id/txtTel" />
+
+    <TextView
+        android:id="@+id/txtAddr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:text="Addr Space"
+        android:textSize="18sp"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txtMainItem"
-        tools:ignore="MissingConstraints" />
-</android.support.constraint.ConstraintLayout>
+        app:layout_constraintTop_toBottomOf="@id/txtName" />
+    <TextView
+        android:id="@+id/txtEtc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="Etc"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtAddr" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,6 +2,13 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="File Open" />
-    <item android:title="Client Add" />
+    <item
+        android:id="@+id/menu0"
+        android:title="DB Sync" />
+    <item
+        android:id="@+id/menu1"
+        android:title="Client Add" />
+    <item
+        android:id="@+id/menu2"
+        android:title="Export File" />
 </menu>
