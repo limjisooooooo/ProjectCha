@@ -1,6 +1,9 @@
 package com.jspersonal.projectcha
 
+import android.Manifest
+import android.content.ContentResolver
 import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.widget.SearchView
@@ -10,6 +13,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.spinner_item.*
 import kotlinx.coroutines.CoroutineScope
@@ -75,21 +79,30 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 0) {
-            CoroutineScope(IO).launch {
-                val clients = getClients()
-                withContext(Main) {
-                    cData.clear()
-                    for (client in clients) {
-                        cData.add(client)
+        when (requestCode) {
+            0 -> {
+                CoroutineScope(IO).launch {
+                    val clients = getClients()
+                    withContext(Main) {
+                        cData.clear()
+                        for (client in clients) {
+                            cData.add(client)
+                        }
+                        val listView = findViewById<ListView>(R.id.listView)
+                        val listAdapter = ListAdapter(cData)
+                        listView.adapter = listAdapter
                     }
-                    val listView = findViewById<ListView>(R.id.listView)
-                    val listAdapter = ListAdapter(cData)
-                    listView.adapter = listAdapter
+                }
+            }
+            1 -> {
+                if (resultCode == RESULT_OK){
+                    if (data != null)
+                        DBSync(data.data!!)
                 }
             }
         }
     }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         val searchView:SearchView = menu?.findItem(R.id.action_search)?.actionView as SearchView
@@ -134,7 +147,10 @@ class MainActivity : AppCompatActivity() {
                         if (item != null) {
                             when(item.itemId){
                                 R.id.menu0 ->{
-                                    DBSync()
+                                    intent = Intent()
+                                    intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                                    intent.setAction(Intent.ACTION_GET_CONTENT)
+                                    startActivityForResult(intent, 1)
                                 }
                                 R.id.menu1 ->{
                                     intent = Intent(this@MainActivity, ClientActivity::class.java)
@@ -188,7 +204,13 @@ class MainActivity : AppCompatActivity() {
                 cell.setCellValue(item.etc)
             }
             try {
-                val xlsFile = File(getExternalFilesDir(null), "Clients.xlsx")
+                val dir = File("/ProjectCha/")
+                if (!dir.exists()){
+                    ActivityCompat.requestPermissions(this@MainActivity,
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+                    dir.mkdirs()
+                }
+                val xlsFile = File("/ProjectCha/Clients.xlsx")
                 val os = FileOutputStream(xlsFile)
                 workbook.write(os)
                 workbook.close()
@@ -210,9 +232,9 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun DBSync(){
+    fun DBSync(uri: Uri){
         try{
-            val inputstream: InputStream? = FileInputStream("${getExternalFilesDir(null)}/Clients.xlsx")
+            val inputstream: InputStream? = getContentResolver().openInputStream(uri)
             CoroutineScope(IO).launch{
                 delAll()
                 if (inputstream != null) {

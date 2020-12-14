@@ -8,6 +8,7 @@ import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -29,10 +30,11 @@ class ClientActivity: Activity() {
         val txtEtc = findViewById<EditText>(R.id.txtEtcC)
         var addFlag = false
         val btnInsert = findViewById<Button>(R.id.btnInsert)
-
+        val btnDelete = findViewById<Button>(R.id.btnDelete)
         CoroutineScope(IO).launch {
             if (intent.hasExtra("cid")) {
                 addFlag = false
+                btnDelete.setEnabled(true)
                 id = intent.getLongExtra("cid", 0)
                 val client = getClient(id!!)
                 withContext(Main){
@@ -44,6 +46,8 @@ class ClientActivity: Activity() {
                 }
             }   else{
                 addFlag = true
+                btnDelete.setEnabled(false)
+                btnDelete.setTextColor(ContextCompat.getColor(this@ClientActivity, android.R.color.darker_gray))
                 id = getNextId()
                 txtName.setText("")
                 txtTel.setText("")
@@ -69,7 +73,7 @@ class ClientActivity: Activity() {
                     }
                     insClient(id!!, name, tel, addr, acptinfos, etc)
                     withContext(Main) {
-                        Toast.makeText(this@ClientActivity, "save success!", Toast.LENGTH_SHORT)
+                        Toast.makeText(this@ClientActivity, "Save success!", Toast.LENGTH_SHORT)
                             .show()
                     }
                     finish()
@@ -77,7 +81,20 @@ class ClientActivity: Activity() {
             }
 
         })
+        btnDelete.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(v: View?) {
+                if (id == null) return
 
+                CoroutineScope(IO).launch {
+                    delClient(id!!)
+                    withContext(Main) {
+                        Toast.makeText(this@ClientActivity, "Delete success!", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    finish()
+                }
+            }
+        })
     }
 
     suspend fun getNextId(): Long{

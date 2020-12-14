@@ -1,0 +1,18 @@
+Index: app/src/main/java/com/jspersonal/projectcha/QueryDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.jspersonal.projectcha\nimport androidx.room.*\n\n@Dao\ninterface QueryDao {\n    @Query(\"SELECT c.id as cid, c.name, c.tel, c.addr, a.lastacpt, c.etc FROM Clients c, (SELECT id, max(acptdate) as lastacpt FROM AcptInfos GROUP BY id) a WHERE c.id = a.id\")\n    fun getClients():List<Client>\n\n    @Query(\"SELECT c.id as cid, c.name, c.tel, c.addr, a.acptdate as lastacpt, c.etc FROM Clients c, (SELECT id, GROUP_CONCAT(acptdate, '/') acptdate FROM ACPTINFOS GROUP BY id) a WHERE c.id = a.id\")\n    fun getAllData():List<Client>\n\n    @Query(\"SELECT c.id as cid, c.name, c.tel, c.addr, a.lastacpt, c.etc FROM Clients c, (SELECT id, max(acptdate) as lastacpt FROM AcptInfos GROUP BY id) a WHERE c.id = a.id AND :opt LIKE :q\")\n    fun getClient(opt: String, q: String):List<Client>\n\n    @Insert\n    fun insClients(vararg clients: Clients)\n\n    @Insert\n    fun insAcptInfos(vararg acptinfos: AcptInfos)\n\n    @Delete\n    fun delClient(clients: Clients)\n\n    @Query(\"DELETE FROM CLIENTS\")\n    fun delClients()\n\n    @Delete\n    fun delAcptInfo(acptInfos: AcptInfos)\n\n    @Query(\"DELETE FROM ACPTINFOS\")\n    fun delAcptInfos()\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/jspersonal/projectcha/QueryDao.kt	(revision cf0e98bae373742cde907d53a98f0a4e565a5e84)
++++ app/src/main/java/com/jspersonal/projectcha/QueryDao.kt	(date 1607900532000)
+@@ -9,7 +9,7 @@
+     @Query("SELECT c.id as cid, c.name, c.tel, c.addr, a.acptdate as lastacpt, c.etc FROM Clients c, (SELECT id, GROUP_CONCAT(acptdate, '/') acptdate FROM ACPTINFOS GROUP BY id) a WHERE c.id = a.id")
+     fun getAllData():List<Client>
+ 
+-    @Query("SELECT c.id as cid, c.name, c.tel, c.addr, a.lastacpt, c.etc FROM Clients c, (SELECT id, max(acptdate) as lastacpt FROM AcptInfos GROUP BY id) a WHERE c.id = a.id AND :opt LIKE :q")
++    @Query("SELECT c.id as cid, c.name, c.tel, c.addr, a.lastacpt, c.etc FROM Clients c, (SELECT id, max(acptdate) as lastacpt FROM AcptInfos GROUP BY id) a WHERE c.id = a.id AND name LIKE :q")
+     fun getClient(opt: String, q: String):List<Client>
+ 
+     @Insert
