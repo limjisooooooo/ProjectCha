@@ -1,5 +1,6 @@
 package com.jspersonal.projectcha
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.widget.SearchView
@@ -7,6 +8,7 @@ import androidx.appcompat.widget.Toolbar
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.spinner_item.*
@@ -39,7 +41,9 @@ class MainActivity : AppCompatActivity() {
         val spinnerAdapter = ArrayAdapter(this, R.layout.spinner_item, spinneritems)
         spinner.adapter = spinnerAdapter
         spinner.dropDownVerticalOffset =
-            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30f, resources.displayMetrics).toInt()
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40f, resources.displayMetrics).toInt()
+
+        val listView = findViewById<ListView>(R.id.listView)
         CoroutineScope(IO).launch {
             var clients = getClients()
             withContext(Main) {
@@ -47,21 +51,51 @@ class MainActivity : AppCompatActivity() {
                 for(client in clients) {
                     cData.add(client)
                 }
-                val listView = findViewById<ListView>(R.id.listView)
                 val listAdapter = ListAdapter(cData)
                 listView.adapter = listAdapter
             }
 
         }
+        listView.setOnItemClickListener(object: AdapterView.OnItemClickListener{
+            override fun onItemClick(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                intent = Intent(this@MainActivity, ClientActivity::class.java)
+                intent.putExtra("cid", cData.get(position).cid)
+                startActivityForResult(intent, 0)
+                //Toast.makeText(this@MainActivity, "${cData.get(position).cid}, ${cData.get(position).name}", Toast.LENGTH_SHORT).show()
+
+            }
+        })
 
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 0) {
+            CoroutineScope(IO).launch {
+                val clients = getClients()
+                withContext(Main) {
+                    cData.clear()
+                    for (client in clients) {
+                        cData.add(client)
+                    }
+                    val listView = findViewById<ListView>(R.id.listView)
+                    val listAdapter = ListAdapter(cData)
+                    listView.adapter = listAdapter
+                }
+            }
+        }
+    }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         val searchView:SearchView = menu?.findItem(R.id.action_search)?.actionView as SearchView
         searchView.maxWidth = tlbMain.width - spinner.right
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
-            override fun onQueryTextSubmit(query: String?): Boolean {
+            override fun onQueryTextSubmit(query: String): Boolean {
                 CoroutineScope(IO).launch {
                     val spinner = findViewById<Spinner>(R.id.spinner)
                     val clients = getClients(spinner.selectedItem.toString(), query)
@@ -74,7 +108,7 @@ class MainActivity : AppCompatActivity() {
                         val listAdapter = ListAdapter(cData)
                         listView.adapter = listAdapter
 
-                        Toast.makeText(this@MainActivity, query, Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(this@MainActivity, query, Toast.LENGTH_SHORT).show()
                     }
 
                 }
@@ -82,6 +116,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onQueryTextChange(query: String?): Boolean {
+                if (query.equals("")) this.onQueryTextSubmit("")
                 return false
             }
 
@@ -100,6 +135,10 @@ class MainActivity : AppCompatActivity() {
                             when(item.itemId){
                                 R.id.menu0 ->{
                                     DBSync()
+                                }
+                                R.id.menu1 ->{
+                                    intent = Intent(this@MainActivity, ClientActivity::class.java)
+                                    startActivityForResult(intent, 0)
                                 }
                                 R.id.menu2 -> {
                                     //Excel Export
@@ -127,13 +166,13 @@ class MainActivity : AppCompatActivity() {
         cell = row.createCell(1)
         cell.setCellValue("연락처")
         cell = row.createCell(2)
-        cell.setCellValue("마지막접수일")
+        cell.setCellValue("접수일")
         cell = row.createCell(3)
         cell.setCellValue("주소")
         cell = row.createCell(4)
         cell.setCellValue("비고")
 
-        val job = CoroutineScope(IO).launch {
+        CoroutineScope(IO).launch {
             val clients = getAll()
             for (item in clients) {
                 row = sheet.createRow(item.cid.toInt())
@@ -257,11 +296,18 @@ class MainActivity : AppCompatActivity() {
         return AppDataBase.getInstance(applicationContext)!!.queryDao().getClients()
     }
     suspend fun getClients(option: String, query: String?): List<Client>{
-        if (query != null){
-            return AppDataBase.getInstance(applicationContext)!!.queryDao().getClient(option, query)
+        var rtn: List<Client>? = null
+        if (query.equals("")){
+            rtn = AppDataBase.getInstance(applicationContext)!!.queryDao().getClients()
         }else {
-            return AppDataBase.getInstance(applicationContext)!!.queryDao().getClients()
+            when(option){
+                "Name"-> rtn = AppDataBase.getInstance(applicationContext)!!.queryDao().getClientforName("%${query}%")
+                "Addr"-> rtn = AppDataBase.getInstance(applicationContext)!!.queryDao().getClientforAddr("%${query}%")
+                "Tel"-> rtn = AppDataBase.getInstance(applicationContext)!!.queryDao().getClientforTel("%${query}%")
+            }
+
         }
+        return rtn!!
     }
     suspend fun getAll(): List<Client>{
         return AppDataBase.getInstance(applicationContext)!!.queryDao().getAllData()
