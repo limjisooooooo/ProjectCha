@@ -1,11 +1,13 @@
 package com.jspersonal.projectcha
 
 import android.Manifest
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import android.util.TypedValue
@@ -95,10 +97,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             1 -> {
-                if (resultCode == RESULT_OK){
-                    if (data != null)
-                        DBSync(data.data!!)
-                }
+                if (resultCode == RESULT_OK) DBSync(data!!.data!!)
+            }
+            2->{
+                if (resultCode == Activity.RESULT_OK) exportExcel(data!!.data!!)
             }
         }
     }
@@ -147,18 +149,27 @@ class MainActivity : AppCompatActivity() {
                         if (item != null) {
                             when(item.itemId){
                                 R.id.menu0 ->{
+                                    //Excel Import and DBSync
                                     intent = Intent()
                                     intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                                     intent.setAction(Intent.ACTION_GET_CONTENT)
                                     startActivityForResult(intent, 1)
                                 }
                                 R.id.menu1 ->{
+                                    //Add Client
                                     intent = Intent(this@MainActivity, ClientActivity::class.java)
                                     startActivityForResult(intent, 0)
                                 }
                                 R.id.menu2 -> {
                                     //Excel Export
-                                    if (!cData.isEmpty()) exportExcel()
+                                    if (!cData.isEmpty()){
+                                        intent = Intent()
+                                        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                                        intent.setAction(Intent.ACTION_CREATE_DOCUMENT)
+                                        intent.putExtra(Intent.EXTRA_TITLE, "Client.xlsx")
+                                        startActivityForResult(intent, 2)
+                                    }
+
                                 }
                             }
                         }
@@ -172,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
-    fun exportExcel(){
+    fun exportExcel(uri: Uri){
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet()
 
@@ -191,7 +202,7 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(IO).launch {
             val clients = getAll()
             for (item in clients) {
-                row = sheet.createRow(item.cid.toInt())
+                row = sheet.createRow(item.cid.toInt()+1)
                 cell = row.createCell(0)
                 cell.setCellValue(item.name)
                 cell = row.createCell(1)
@@ -204,21 +215,14 @@ class MainActivity : AppCompatActivity() {
                 cell.setCellValue(item.etc)
             }
             try {
-                val dir = File("/ProjectCha/")
-                if (!dir.exists()){
-                    ActivityCompat.requestPermissions(this@MainActivity,
-                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
-                    dir.mkdirs()
-                }
-                val xlsFile = File("/ProjectCha/Clients.xlsx")
-                val os = FileOutputStream(xlsFile)
+                val os = FileOutputStream(contentResolver.openFileDescriptor(uri, "w")!!.fileDescriptor)
                 workbook.write(os)
                 workbook.close()
                 os.close()
                 withContext(Main){
                     Toast.makeText(
                         this@MainActivity,
-                        "${xlsFile.absolutePath} Export Success!",
+                        "Export Success!",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -242,8 +246,8 @@ class MainActivity : AppCompatActivity() {
                     val workbook = XSSFWorkbook(inputstream)
                     val sheet = workbook.getSheetAt(0)
                     val rows = sheet.physicalNumberOfRows
-                    for (i in 0 until rows) {
-                        var row = sheet.getRow(i)
+                    for (i in 0 until rows-1) {
+                        var row = sheet.getRow(i+1)
                         var cid = i.toLong()
 
                         var cell: Cell? = row.getCell(0)
